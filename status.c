@@ -23,6 +23,10 @@ extern int istrue() {
 	return TRUE;
 }
 
+extern int getstatus() {
+	return statuses[0];
+}
+
 /*
    Return the status as an integer. A status which has low-bits set is
    a signal number, whereas a status with high bits set is a value set
@@ -30,7 +34,7 @@ extern int istrue() {
    a pipeline with nonzero exit statuses in it just sets status to 1.
 */
 
-extern int getstatus() {
+extern int getexitstatus() {
 	int s;
 	if (pipelength > 1)
 		return !istrue();

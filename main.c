@@ -112,13 +112,13 @@ quitopts:
 			pushstring(dashsee, TRUE);
 	} else if (*argv != NULL) {	/* else from a file? */
 		b_dot(--argv);
-		rc_exit(getstatus());
+		rc_exit(getexitstatus());
 	} else {			/* else stdin */
 		pushfd(0);
 	}
 	dasheye = FALSE;
 	doit(TRUE);
-	rc_exit(getstatus());
+	rc_exit(getexitstatus());
 	return 0; /* Never really reached. */
 }
 

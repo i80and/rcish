@@ -343,6 +343,7 @@ extern void (*sighandlers[])(int);
 /* status.c */
 extern int istrue(void);
 extern int getstatus(void);
+extern int getexitstatus(void);
 extern void set(bool);
 extern void setstatus(pid_t, int);
 extern List *sgetstatus(void);

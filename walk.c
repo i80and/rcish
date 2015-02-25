@@ -40,7 +40,7 @@ top:	sigchk();
 		break;
 	case nBody:
 		walk(n->u[0].p, TRUE, exitOnError);
-		if(exitOnError && getstatus()) {
+		if(exitOnError && getexitstatus()) {
 			// When in a "safe" context (i.e. a "try" block), break out of the
 			// current body on error.
 			break;
@@ -62,7 +62,7 @@ top:	sigchk();
 #endif
 			mvfd(rc_open("/dev/null", rFrom), 0);
 			walk(n->u[0].p, FALSE, exitOnError);
-			exit(getstatus());
+			exit(getexitstatus());
 		}
 		if (interactive)
 			fprint(2, "%d\n", pid);
@@ -161,7 +161,7 @@ top:	sigchk();
 		if (dofork(TRUE)) {
 			setsigdefaults(FALSE);
 			walk(n->u[0].p, FALSE, exitOnError);
-			rc_exit(getstatus());
+			rc_exit(getexitstatus());
 		}
 		break;
 	case nAssign:
@@ -241,7 +241,7 @@ top:	sigchk();
 			if (!haspreredir(n->u[1].p))
 				doredirs(); /* no more preredirs, empty queue */
 			walk(n->u[1].p, FALSE, exitOnError);
-			rc_exit(getstatus());
+			rc_exit(getexitstatus());
 			/* NOTREACHED */
 		} else if (n->u[0].p->type == nAssign) {
 			if (isallpre(n->u[1].p)) {
@@ -270,7 +270,7 @@ top:	sigchk();
 			walk(n->u[1].p, TRUE, exitOnError); /* Do redirections */
 			redirq = NULL;   /* Reset redirection queue */
 			walk(n->u[0].p, FALSE, exitOnError); /* Do commands */
-			rc_exit(getstatus());
+			rc_exit(getexitstatus());
 			/* NOTREACHED */
 		}
 		break;
@@ -349,7 +349,7 @@ static void dopipe(Node *n) {
 				mvfd(fd_prev, fd_out);
 			close(p[1]);
 			walk(r->u[3].p, FALSE, TRUE);
-			exit(getstatus());
+			exit(getexitstatus());
 		}
 		if (fd_prev != 1)
 			close(fd_prev); /* parent must close all pipe fd's */
@@ -362,7 +362,7 @@ static void dopipe(Node *n) {
 		setsigdefaults(FALSE);
 		mvfd(fd_prev, fd_out);
 		walk(r, FALSE, FALSE);
-		exit(getstatus());
+		exit(getexitstatus());
 		/* NOTREACHED */
 	}
 	redirq = NULL; /* clear preredir queue */

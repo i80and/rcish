@@ -92,7 +92,7 @@ extern void exec(List *s, bool parent) {
 				(*b)(av);
 			if (returning)
 				return;
-			rc_exit(getstatus());
+			rc_exit(getexitstatus());
 		}
 		rc_execve(path, (char * const *) av, (char * const *) ev);
 

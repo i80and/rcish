@@ -115,7 +115,7 @@ extern void rc_exit(int stat) {
 		sig[1] = NULL;
 		runexit = FALSE;
 		funcall(sig);
-		stat = getstatus();
+		stat = getexitstatus();
 	}
 	exit(stat);
 }

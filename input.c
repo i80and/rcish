@@ -280,8 +280,12 @@ extern Node *doit(bool clobberexecit) {
 				static char *arglist[] = { "prompt", NULL };
 
 				if (!died) {
+					// Save the original status so that prompt doesn't clobber
+					// over $status.
+					int oldstatus = getstatus();
 					died = TRUE;
 					funcall(arglist);
+					setstatus(-1, oldstatus);
 				}
 				died = FALSE;
 			}
