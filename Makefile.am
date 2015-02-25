@@ -27,7 +27,7 @@ noinst_PROGRAMS = mksignal mkstatval tripping $(HISTORY)
 
 rc_SOURCES = builtins.c except.c exec.c fn.c footobar.c getopt.c glob.c glom.c hash.c heredoc.c input.c lex.c list.c main.c match.c nalloc.c open.c parse.c print.c redir.c signal.c status.c tree.c utils.c var.c wait.c walk.c which.c
 
-EXTRA_rc_SOURCES = addon.c edit-bsd.c edit-gnu.c edit-null.c execve.c system.c system-bsd.c
+EXTRA_rc_SOURCES = addon.c linenoise/linenoise.c edit-linenoise.c edit-bsd.c edit-gnu.c edit-null.c execve.c system.c system-bsd.c
 
 rc_DEPENDENCIES = sigmsgs.o $(ADDON) $(EDIT) $(EXECVE) $(SYSTEM)
 rc_LDADD = sigmsgs.o $(ADDON) $(EDIT) $(EXECVE) $(SYSTEM)
@@ -40,6 +40,8 @@ EXTRA_DIST = EXAMPLES RELDATE addon.c addon.h history.1 parse.y rc.1 trip.rc
 
 sigmsgs.c sigmsgs.h: mksignal
 	./mksignal
+
+edit-linenoise.o: linenoise/linenoise.o
 
 # Newer automake's buildtime dependency tracking can't seem to figure
 # this one out.

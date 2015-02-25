@@ -7,7 +7,7 @@ AC_DEFINE_UNQUOTED(RELDATE, "$RELDATE", [Release date])
 
 dnl Get things going...
 AC_CONFIG_SRCDIR([rc.h])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([subdir-objects])
 
 AM_CONFIG_HEADER(config.h)
 
@@ -169,12 +169,14 @@ esac
 AC_SUBST(ADDON)
 
 
-EDIT=edit-null.o
-AC_ARG_WITH(edit, [  --with-edit=(bsd,edit,gnu,vrl)  Command line editing library], [
+EDIT="edit-linenoise.o linenoise/linenoise.o"
+AC_ARG_WITH(edit, [  --with-edit=(linenoise,bsd,edit,gnu,vrl,null)  Command line editing library], [
 	case $withval in
 	yes)
 		AC_MSG_ERROR(must specify which library)
 		# might consider searching
+		;;
+	linenoise)
 		;;
 	bsd)
 		EDIT=edit-bsd.o
@@ -197,6 +199,7 @@ AC_ARG_WITH(edit, [  --with-edit=(bsd,edit,gnu,vrl)  Command line editing librar
 		], [], AC_MSG_ERROR(readline >= 4.0 not found))
 		;;
 	no|null)
+		EDIT=edit-null.o
 		;;
 	edit|vrl)
 		EDIT=edit-$withval.o
