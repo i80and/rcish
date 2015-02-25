@@ -20,7 +20,7 @@ extern void pr_error(char *s, int offset) {
 
 /* our perror */
 
-extern void uerror(char *s) {
+extern void uerror(const char *s) {
 	char *err;
 
 	err = strerror(errno);

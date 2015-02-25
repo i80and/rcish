@@ -380,7 +380,7 @@ extern int mvfd(int, int);
 extern int starstrcmp(const void *, const void *);
 extern void pr_error(char *, int);
 extern void panic(char *);
-extern void uerror(char *);
+extern void uerror(const char *);
 
 /* wait.c */
 extern pid_t rc_fork(void);

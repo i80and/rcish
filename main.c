@@ -14,6 +14,7 @@ static bool dashEYE, dashell, dashoh, dashess;
 
 static void assigndefault(char *,...);
 static void checkfd(int, enum redirtype);
+static int loadprofile(const char *rcrc);
 
 extern int main(int argc, char *argv[], char *envp[]) {
 	char *dashsee[2], *dollarzero, *null[1];
@@ -91,24 +92,14 @@ quitopts:
 	starassign(dollarzero, null, FALSE); /* assign $0 to $* */
 	inithandler();
 
-	if (dashell) {
-		char *rcrc;
-		int fd;
+	if (interactive) {
+	    const char *HOME_PATH = concat(varlookup("home"), word("/.rcrc", NULL))->w;
+		if(loadprofile(HOME_PATH)) {
+		    uerror(HOME_PATH);
+		}
 
-		rcrc = concat(varlookup("home"), word("/.rcrc", NULL))->w;
-		fd = rc_open(rcrc, rFrom);
-		if (fd == -1) {
-			if (errno != ENOENT)
-				uerror(rcrc);
-		} else {
-			bool push_interactive;
-
-			pushfd(fd);
-			push_interactive = interactive;
-			interactive = FALSE;
-			doit(TRUE);
-			interactive = push_interactive;
-			close(fd);
+		if(loadprofile(SYSCONFDIR "/profile.rc")) {
+		    uerror(SYSCONFDIR "/profile.rc");
 		}
 	}
 
@@ -143,6 +134,28 @@ static void assigndefault(char *name,...) {
 	if (streq(name, "path"))
 		alias(name, l, FALSE);
 	va_end(ap);
+}
+
+/* Run a file at the given path, or return 1 */
+
+static int loadprofile(const char *rcrc) {
+	int fd = rc_open(rcrc, rFrom);
+	if (fd == -1) {
+		if (errno != ENOENT) {
+			return 1;
+		}
+	} else {
+		bool push_interactive;
+
+		pushfd(fd);
+		push_interactive = interactive;
+		interactive = FALSE;
+		doit(TRUE);
+		interactive = push_interactive;
+		close(fd);
+	}
+
+	return 0;
 }
 
 /* open an fd on /dev/null if it is inherited closed */

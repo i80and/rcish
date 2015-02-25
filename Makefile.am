@@ -2,6 +2,9 @@
 
 EDIT=@EDIT@
 
+AM_CPPFLAGS = \
+    -DSYSCONFDIR=\"$(sysconfdir)\"
+
 if AMC_HISTORY
 man_MANS = rc.1 history.1
 HISTORY = history
