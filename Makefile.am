@@ -59,10 +59,10 @@ DISTCLEANFILES = sigmsgs.c sigmsgs.h statval.h
 # dependency expressed, since the distributed parse.[ch] (generated with
 # byacc, and lightly edited to remove a couple of gcc warnings) are
 # portable (I hope).
-#parse.c parse.h: $(srcdir)/parse.y
-#	$(YACC) -d $(srcdir)/parse.y
-#	mv y.tab.c parse.c
-#	mv y.tab.h parse.h
+parse.c parse.h: $(srcdir)/parse.y
+	$(YACC) -d $(srcdir)/parse.y
+	mv y.tab.c parse.c
+	mv y.tab.h parse.h
 
 check: trip
 

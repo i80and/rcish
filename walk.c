@@ -24,7 +24,7 @@ static void dopipe(Node *);
 
 /* walk the parse-tree. "obvious". */
 
-extern bool walk(Node *n, bool parent) {
+extern bool walk(Node *n, bool parent, bool exitOnError) {
 top:	sigchk();
 	if (n == NULL) {
 		if (!parent)
@@ -39,7 +39,13 @@ top:	sigchk();
 		exec(glob(glom(n)), parent);	/* simple command */
 		break;
 	case nBody:
-		walk(n->u[0].p, TRUE);
+		walk(n->u[0].p, TRUE, exitOnError);
+		if(exitOnError && getstatus()) {
+			// When in a "safe" context (i.e. a "try" block), break out of the
+			// current body on error.
+			break;
+		}
+
 		WALK(n->u[1].p, parent);
 		/* WALK doesn't fall through */
 	case nNowait: {
@@ -55,7 +61,7 @@ top:	sigchk();
 			setsigdefaults(TRUE);		/* ignore SIGINT, SIGQUIT, SIGTERM */
 #endif
 			mvfd(rc_open("/dev/null", rFrom), 0);
-			walk(n->u[0].p, FALSE);
+			walk(n->u[0].p, FALSE, exitOnError);
 			exit(getstatus());
 		}
 		if (interactive)
@@ -67,7 +73,7 @@ top:	sigchk();
 	case nAndalso: {
 		bool oldcond = cond;
 		cond = TRUE;
-		if (walk(n->u[0].p, TRUE)) {
+		if (walk(n->u[0].p, TRUE, exitOnError)) {
 			cond = oldcond;
 			WALK(n->u[1].p, parent);
 		} else
@@ -77,7 +83,7 @@ top:	sigchk();
 	case nOrelse: {
 		bool oldcond = cond;
 		cond = TRUE;
-		if (!walk(n->u[0].p, TRUE)) {
+		if (!walk(n->u[0].p, TRUE, exitOnError)) {
 			cond = oldcond;
 			WALK(n->u[1].p, parent);
 		} else
@@ -85,7 +91,7 @@ top:	sigchk();
 		break;
 	}
 	case nBang:
-		set(!walk(n->u[0].p, TRUE));
+		set(!walk(n->u[0].p, TRUE, exitOnError));
 		break;
 	case nIf: {
 		bool oldcond = cond;
@@ -95,8 +101,11 @@ top:	sigchk();
 			true_cmd = true_cmd->u[0].p;
 		}
 		cond = TRUE;
-		if (!walk(n->u[0].p, TRUE))
+		if (!walk(n->u[0].p, TRUE, FALSE)) {
+			// The condition is designed to potentially fail, so don't propogate
+			// exitOnError
 			true_cmd = false_cmd; /* run the else clause */
+		}
 		cond = oldcond;
 		WALK(true_cmd, parent);
 	}
@@ -106,7 +115,7 @@ top:	sigchk();
 		Estack e1, e2;
 		bool testtrue, oldcond = cond;
 		cond = TRUE;
-		if (!walk(n->u[0].p, TRUE)) { /* prevent spurious breaks inside test */
+		if (!walk(n->u[0].p, TRUE, FALSE)) { /* prevent spurious breaks inside test */
 			cond = oldcond;
 			break;
 		}
@@ -119,8 +128,8 @@ top:	sigchk();
 			block.b = newblock();
 			cond = oldcond;
 			except(eArena, block, &e2);
-			walk(n->u[1].p, TRUE);
-			testtrue = walk(n->u[0].p, TRUE);
+			walk(n->u[1].p, TRUE, exitOnError);
+			testtrue = walk(n->u[0].p, TRUE, FALSE);
 			unexcept(); /* eArena */
 			cond = TRUE;
 		} while (testtrue);
@@ -142,7 +151,7 @@ top:	sigchk();
 			assign(var, word(l->w, NULL), FALSE);
 			block.b = newblock();
 			except(eArena, block, &e2);
-			walk(n->u[2].p, TRUE);
+			walk(n->u[2].p, TRUE, exitOnError);
 			unexcept(); /* eArena */
 		}
 		unexcept(); /* eBreak */
@@ -151,7 +160,7 @@ top:	sigchk();
 	case nSubshell:
 		if (dofork(TRUE)) {
 			setsigdefaults(FALSE);
-			walk(n->u[0].p, FALSE);
+			walk(n->u[0].p, FALSE, exitOnError);
 			rc_exit(getstatus());
 		}
 		break;
@@ -188,6 +197,14 @@ top:	sigchk();
 		set(TRUE);
 		break;
 	}
+	case nNewtry: {
+		if (!walk(n->u[0].p, TRUE, TRUE)) {
+			set(FALSE);
+			break;
+		}
+		set(TRUE);
+		break;
+	}
 	case nDup:
 		redirq = NULL;
 		break; /* Null command */
@@ -208,7 +225,7 @@ top:	sigchk();
 			} while (n->u[0].p == NULL || n->u[0].p->type != nCase);
 			if (lmatch(v, glom(n->u[0].p->u[0].p))) {
 				for (n = n->u[1].p; n != NULL && (n->u[0].p == NULL || n->u[0].p->type != nCase); n = n->u[1].p)
-					walk(n->u[0].p, TRUE);
+					walk(n->u[0].p, TRUE, FALSE);
 				break;
 			}
 		}
@@ -223,12 +240,12 @@ top:	sigchk();
 			qredir(n->u[0].p);
 			if (!haspreredir(n->u[1].p))
 				doredirs(); /* no more preredirs, empty queue */
-			walk(n->u[1].p, FALSE);
+			walk(n->u[1].p, FALSE, exitOnError);
 			rc_exit(getstatus());
 			/* NOTREACHED */
 		} else if (n->u[0].p->type == nAssign) {
 			if (isallpre(n->u[1].p)) {
-				walk(n->u[0].p, TRUE);
+				walk(n->u[0].p, TRUE, exitOnError);
 				WALK(n->u[1].p, parent);
 			} else {
 				Estack e;
@@ -237,7 +254,7 @@ top:	sigchk();
 				assign(v, glob(glom(n->u[0].p->u[1].p)), TRUE);
 				var.name = v->w;
 				except(eVarstack, var, &e);
-				walk(n->u[1].p, parent);
+				walk(n->u[1].p, parent, exitOnError);
 				varrm(v->w, TRUE);
 				unexcept(); /* eVarstack */
 			}
@@ -250,9 +267,9 @@ top:	sigchk();
 			WALK(n->u[0].p, parent);
 		} else if (dofork(parent)) {
 			setsigdefaults(FALSE);
-			walk(n->u[1].p, TRUE); /* Do redirections */
+			walk(n->u[1].p, TRUE, exitOnError); /* Do redirections */
 			redirq = NULL;   /* Reset redirection queue */
-			walk(n->u[0].p, FALSE); /* Do commands */
+			walk(n->u[0].p, FALSE, exitOnError); /* Do commands */
 			rc_exit(getstatus());
 			/* NOTREACHED */
 		}
@@ -331,7 +348,7 @@ static void dopipe(Node *n) {
 			if (fd_prev != 1)
 				mvfd(fd_prev, fd_out);
 			close(p[1]);
-			walk(r->u[3].p, FALSE);
+			walk(r->u[3].p, FALSE, TRUE);
 			exit(getstatus());
 		}
 		if (fd_prev != 1)
@@ -344,7 +361,7 @@ static void dopipe(Node *n) {
 	if ((pid = rc_fork()) == 0) {
 		setsigdefaults(FALSE);
 		mvfd(fd_prev, fd_out);
-		walk(r, FALSE);
+		walk(r, FALSE, FALSE);
 		exit(getstatus());
 		/* NOTREACHED */
 	}

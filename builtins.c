@@ -83,7 +83,7 @@ extern void funcall(char **av) {
 	star.name = "*";
 	except(eReturn, jreturn, &e1);
 	except(eVarstack, star, &e2);
-	walk(treecpy(fnlookup(*av), nalloc), TRUE);
+	walk(treecpy(fnlookup(*av), nalloc), TRUE, FALSE);
 	varrm("*", TRUE);
 	unexcept(); /* eVarstack */
 	unexcept(); /* eReturn */

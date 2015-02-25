@@ -306,7 +306,7 @@ extern Node *doit(bool clobberexecit) {
 		eof = (lastchar == EOF); /* "lastchar" can be clobbered during a walk() */
 		if (parsetree != NULL) {
 			if (execit)
-				walk(parsetree, TRUE);
+				walk(parsetree, TRUE, FALSE);
 			else if (dashex && dashen)
 				fprint(2, "%T\n", parsetree);
 		}

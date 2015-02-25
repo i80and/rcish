@@ -203,7 +203,7 @@ extern void alias(char *name, List *s, bool stack) {
 extern void prettyprint_var(int fd, char *name, List *s) {
 	int i;
 	static const char * const keywords[] = {
-		"if", "in", "fn", "for", "else", "switch", "while", "case"
+		"if", "in", "fn", "try", "for", "else", "switch", "while", "case"
 	};
 	if (s == NULL) {
 		fprint(fd, "%S=()\n", name);

@@ -259,7 +259,7 @@ static List *backq(Node *ifs, Node *n) {
 		mvfd(p[1], 1);
 		close(p[0]);
 		redirq = NULL;
-		walk(n, FALSE);
+		walk(n, FALSE, FALSE);
 		exit(getstatus());
 	}
 	close(p[1]);
@@ -303,7 +303,7 @@ static List *mkcmdarg(Node *n) {
 			exit(1);
 		close(p[n->u[0].i != rFrom]);
 		redirq = NULL;
-		walk(n->u[2].p, FALSE);
+		walk(n->u[2].p, FALSE, FALSE);
 		exit(getstatus());
 	}
 
@@ -353,7 +353,7 @@ static List *mkcmdarg(Node *n) {
 		if (mvfd(fd, (n->u[0].i == rFrom)) < 0) /* same stupid hack */
 			exit(1);
 		redirq = NULL;
-		walk(n->u[2].p, FALSE);
+		walk(n->u[2].p, FALSE, FALSE);
 		exit(getstatus());
 	}
 	efifo.name = name;

@@ -31,7 +31,7 @@ extern Node *mk(int /*nodetype*/ t,...) {
 		n->u[0].p = va_arg(ap, Node *);
 		break;
 	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
-	case nElse: case nEpilog: case nIf: case nNewfn: case nCbody:
+	case nElse: case nEpilog: case nIf: case nNewfn: case nNewtry: case nCbody:
 	case nOrelse: case nPre: case nArgs: case nSwitch:
 	case nMatch: case nVarsub: case nWhile: case nLappend:
 		n = nalloc(offsetof(Node, u[2]));
@@ -97,7 +97,7 @@ extern Node *treecpy(Node *s, void *(*alloc)(size_t)) {
 		n->u[0].p = treecpy(s->u[0].p, alloc);
 		break;
 	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
-	case nElse: case nEpilog: case nIf: case nNewfn: case nCbody:
+	case nElse: case nEpilog: case nIf: case nNewfn: case nNewtry: case nCbody:
 	case nOrelse: case nPre: case nArgs: case nSwitch:
 	case nMatch: case nVarsub: case nWhile: case nLappend:
 		n = (*alloc)(offsetof(Node, u[2]));
@@ -150,7 +150,7 @@ extern void treefree(Node *s) {
 		treefree(s->u[0].p);
 		break;
 	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
-	case nElse: case nEpilog: case nIf: case nNewfn:
+	case nElse: case nEpilog: case nIf: case nNewfn: case nNewtry:
 	case nOrelse: case nPre: case nArgs: case nCbody:
 	case nSwitch: case nMatch:  case nVarsub: case nWhile:
 	case nLappend:

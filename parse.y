@@ -15,6 +15,7 @@ Node *parsetree;	/* not using yylval because bison declares it as an auto */
 
 %token ANDAND BACKBACK BANG CASE COUNT DUP ELSE END FLAT FN FOR IF IN
 %token OROR PIPE REDIR SREDIR SUB SUBSHELL SWITCH TWIDDLE WHILE WORD HUH
+%token TRY
 
 %left WHILE ')' ELSE
 %left ANDAND OROR '\n'
@@ -112,6 +113,7 @@ cmd	: /* empty */	%prec WHILE		{ $$ = NULL; }
 	| assign cmd	%prec BANG		{ $$ = ($2 != NULL ? mk(nPre,$1,$2) : $1); }
 	| BANG optcaret cmd			{ $$ = mk(nBang,$3); }
 	| SUBSHELL optcaret cmd			{ $$ = mk(nSubshell,$3); }
+	| TRY brace					{ $$ = mk(nNewtry,$2); }
 	| FN words brace			{ $$ = mk(nNewfn,$2,$3); }
 	| FN words				{ $$ = mk(nRmfn,$2); }
 
@@ -149,6 +151,7 @@ keyword	: FOR		{ $$ = "for"; }
 	| IF		{ $$ = "if"; }
 	| SWITCH	{ $$ = "switch"; }
 	| FN		{ $$ = "fn"; }
+	| TRY		{ $$ = "try"; }
 	| ELSE		{ $$ = "else"; }
 	| CASE		{ $$ = "case"; }
 	| TWIDDLE	{ $$ = "~"; }
