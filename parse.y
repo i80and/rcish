@@ -116,6 +116,7 @@ cmd	: /* empty */	%prec WHILE		{ $$ = NULL; }
 	| TRY brace					{ $$ = mk(nNewtry,$2); }
 	| FN words brace			{ $$ = mk(nNewfn,$2,$3); }
 	| FN words				{ $$ = mk(nRmfn,$2); }
+    | FN words '=' words		{ $$ = mk(nAssignfn,$2,$4); }
 
 optcaret : /* empty */
 	| '^'

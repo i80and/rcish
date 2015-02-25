@@ -66,6 +66,7 @@ static bool Tconv(Format *f, int ignore) {
 	case nConcat:	fmtprint(f, "%T^%T", n->u[0].p, n->u[1].p);		break;
 	case nElse:	fmtprint(f, "{%T}else %T", n->u[0].p, n->u[1].p);	break;
 	case nNewfn:	fmtprint(f, "fn %T {%T}", n->u[0].p, n->u[1].p);	break;
+	case nAssignfn:	fmtprint(f, "fn %T = %T", n->u[0].p, n->u[1].p);	break;
 	case nNewtry:	fmtprint(f, "try {%T}", n->u[0].p);	break;
 	case nIf:	fmtprint(f, "if(%T)%T", n->u[0].p, n->u[1].p);		break;
 	case nOrelse:	fmtprint(f, "%T||%T", n->u[0].p, n->u[1].p);		break;

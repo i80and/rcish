@@ -197,6 +197,15 @@ top:	sigchk();
 		set(TRUE);
 		break;
 	}
+	case nAssignfn: {
+		List *l = glom(n->u[0].p);
+		List *l2 = glom(n->u[1].p);
+		if (l == NULL)
+			rc_error("null function name");
+
+		fnassign(l->w, fnlookup(l2->w));
+		break;
+	}
 	case nNewtry: {
 		if (!walk(n->u[0].p, TRUE, TRUE)) {
 			set(FALSE);
