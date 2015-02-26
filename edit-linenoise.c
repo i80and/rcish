@@ -8,6 +8,7 @@
 
 bool editing = 1;
 
+static char nullbuffer[1] = {'\0'};
 struct cookie {
 	char *buffer;
 };
@@ -48,6 +49,11 @@ char *edit_alloc(void *cookie, size_t *count) {
 			linenoiseHistoryAdd(c->buffer);
 		c->buffer[*count] = '\n';
 		*count += 1;
+	} else if (errno == EAGAIN) {
+		errno = 0;
+		write(2, "\n", 1);
+		rc_raise(eError);
+		c->buffer = nullbuffer;
 	}
 
 	return c->buffer;
