@@ -35,6 +35,9 @@ char *edit_alloc(void *cookie, size_t *count) {
 	oldquit = sys_signal(SIGQUIT, edit_catcher);
 
 	c->buffer = linenoise(prompt);
+	// XXX Because we disabled linenoise's signal handling, we need to clean up
+	// the terminal ourselves.  Or give linenoise some way to clean up and
+	// tell us what signal it caught.
 
 	sys_signal(SIGINT, oldint);
 	sys_signal(SIGQUIT, oldquit);

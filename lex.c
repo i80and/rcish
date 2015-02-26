@@ -165,6 +165,7 @@ top:	while ((c = gchar()) == ' ' || c == '\t')
 		if (streq(buf, "switch")) return SWITCH;
 		if (streq(buf, "while")) return WHILE;
 		if (streq(buf, "case")) return CASE;
+		if (streq(buf, "local")) return LOCAL;
 		w = RW;
 		y->word.w = ncpy(buf);
 		if (saw_meta) {

@@ -7,6 +7,25 @@
 
 #include "jbwrap.h"
 
+static int nScopes = 0;
+static scope_t scopeStack[128];
+static void pushScope(scope_t scope) {
+	if(nScopes >= 128) {
+		panic("scopes nested too deeply");
+	}
+	scopeStack[nScopes] = scope;
+	nScopes += 1;
+}
+
+static void popScope(void) {
+	if(nScopes > 0) { nScopes -= 1; }
+}
+
+extern scope_t getScope(void) {
+	if(nScopes > 0) { return scopeStack[nScopes-1]; }
+	else { return 0; }
+}
+
 /*
    global which indicates whether rc is executing a test;
    used by rc -e so that if (false) does not exit.
@@ -148,7 +167,7 @@ top:	sigchk();
 		except(eBreak, jbreak, &e1);
 		for (l = listcpy(glob(glom(n->u[1].p)), nalloc); l != NULL; l = l->n) {
 			Edata block;
-			assign(var, word(l->w, NULL), FALSE);
+			assign(var, word(l->w, NULL), FALSE, FALSE);
 			block.b = newblock();
 			except(eArena, block, &e2);
 			walk(n->u[2].p, TRUE, exitOnError);
@@ -167,7 +186,13 @@ top:	sigchk();
 	case nAssign:
 		if (n->u[0].p == NULL)
 			rc_error("null variable name");
-		assign(glom(n->u[0].p), glob(glom(n->u[1].p)), FALSE);
+		assign(glom(n->u[0].p), glob(glom(n->u[1].p)), FALSE, FALSE);
+		set(TRUE);
+		break;
+	case nLocalassign:
+		if (n->u[0].p == NULL)
+			rc_error("null variable name");
+		assign(glom(n->u[0].p), glob(glom(n->u[1].p)), FALSE, TRUE);
 		set(TRUE);
 		break;
 	case nPipe:
@@ -260,7 +285,7 @@ top:	sigchk();
 				Estack e;
 				Edata var;
 				v = glom(n->u[0].p->u[0].p);
-				assign(v, glob(glom(n->u[0].p->u[1].p)), TRUE);
+				assign(v, glob(glom(n->u[0].p->u[1].p)), TRUE, FALSE);
 				var.name = v->w;
 				except(eVarstack, var, &e);
 				walk(n->u[1].p, parent, exitOnError);
@@ -271,14 +296,17 @@ top:	sigchk();
 			panic("unexpected node in preredir section of walk");
 		break;
 	}
-	case nBrace:
+	case nScope:
+		pushScope(n->u[2].scope);
 		if (n->u[1].p == NULL) {
-			WALK(n->u[0].p, parent);
+			walk(n->u[0].p, parent, exitOnError);
+			popScope();
 		} else if (dofork(parent)) {
 			setsigdefaults(FALSE);
 			walk(n->u[1].p, TRUE, exitOnError); /* Do redirections */
 			redirq = NULL;   /* Reset redirection queue */
 			walk(n->u[0].p, FALSE, exitOnError); /* Do commands */
+			popScope();
 			rc_exit(getexitstatus());
 			/* NOTREACHED */
 		}

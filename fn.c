@@ -211,7 +211,7 @@ extern char *fnlookup_string(char *name) {
 		return NULL;
 	if (look->extdef != NULL)
 		return look->extdef;
-	return look->extdef = mprint("fn_%F={%T}", name, look->def);
+	return look->extdef = mprint("fn_%F=%T", name, look->def);
 }
 
 /*
@@ -257,5 +257,5 @@ extern void whatare_all_signals() {
 }
 
 extern void prettyprint_fn(int fd, char *name, Node *n) {
-	fprint(fd, "fn %S {%T}\n", name, n);
+	fprint(fd, "fn %S %T\n", name, n);
 }

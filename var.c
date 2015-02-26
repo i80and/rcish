@@ -93,6 +93,24 @@ extern List *varlookup(char *name) {
 	return look->def = ret;
 }
 
+extern List* varlookup_scopes(char* rawname) {
+	char* name = resolve_varname(rawname);
+	return varlookup(name);
+}
+
+extern char* resolve_varname(char* rawname) {
+	scope_t curScope = getScope();
+	do {
+		char* name = getLocalName(curScope, rawname);
+		List* cur = varlookup(name);
+		if(cur != NULL) { return name; }
+		curScope = getScopeParent(curScope);
+	} while(curScope > 0);
+
+	// Return the global, if no locals were found
+	return rawname;
+}
+
 /* lookup a variable in external (string) form, converting if necessary. Used by makeenv() */
 
 extern char *varlookup_string(char *name) {

@@ -69,7 +69,8 @@ extern int yydebug;
     WHILE = 279,
     WORD = 280,
     HUH = 281,
-    TRY = 282
+    TRY = 282,
+    LOCAL = 283
   };
 #endif
 /* Tokens.  */
@@ -98,6 +99,7 @@ extern int yydebug;
 #define WORD 280
 #define HUH 281
 #define TRY 282
+#define LOCAL 283
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -112,8 +114,9 @@ union YYSTYPE
 	struct Dup dup;
 	struct Word word;
 	char *keyword;
+	long scope;
 
-#line 117 "y.tab.h" /* yacc.c:1909  */
+#line 120 "y.tab.h" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

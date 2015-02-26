@@ -260,6 +260,10 @@ static bool var_exportable(char *s) {
 	for (i = 0; i < arraysize(maybeexport); i++)
 		if (maybeexport[i].flag == FALSE && streq(s, maybeexport[i].name))
 			return FALSE;
+
+	// Don't export locals
+	if(strstr(s, LOCAL_PREFIX) == s) { return FALSE; }
+
 	return TRUE;
 }
 

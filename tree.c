@@ -30,10 +30,17 @@ extern Node *mk(int /*nodetype*/ t,...) {
 		n = nalloc(offsetof(Node, u[1]));
 		n->u[0].p = va_arg(ap, Node *);
 		break;
-	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
-	case nElse: case nEpilog: case nIf: case nNewfn: case nAssignfn: case nNewtry:
-	case nCbody: case nOrelse: case nPre: case nArgs: case nSwitch:
-	case nMatch: case nVarsub: case nWhile: case nLappend:
+	case nScope:
+		n = nalloc(offsetof(Node, u[4]));
+		n->u[2].scope = va_arg(ap, scope_t);
+		n->u[0].p = va_arg(ap, Node *);
+		n->u[1].p = va_arg(ap, Node *);
+		n->u[3].p = NULL;
+		break;
+	case nAndalso: case nAssign: case nLocalassign: case nBackq:
+	case nBody: case nConcat: case nElse: case nEpilog: case nIf: case nNewfn:
+	case nAssignfn: case nNewtry: case nCbody: case nOrelse: case nPre: case nArgs:
+	case nSwitch: case nMatch: case nVarsub: case nWhile: case nLappend:
 		n = nalloc(offsetof(Node, u[2]));
 		n->u[0].p = va_arg(ap, Node *);
 		n->u[1].p = va_arg(ap, Node *);
@@ -96,7 +103,14 @@ extern Node *treecpy(Node *s, void *(*alloc)(size_t)) {
 		n = (*alloc)(offsetof(Node, u[1]));
 		n->u[0].p = treecpy(s->u[0].p, alloc);
 		break;
-	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
+	case nScope:
+		n = (*alloc)(offsetof(Node, u[4]));
+		n->u[0].p = treecpy(s->u[0].p, alloc);
+		n->u[1].p = treecpy(s->u[1].p, alloc);
+		n->u[2].scope = s->u[2].scope;
+		n->u[3].p = treecpy(s->u[3].p, alloc);
+		break;
+	case nAndalso: case nAssign: case nLocalassign: case nBackq: case nBody: case nConcat:
 	case nElse: case nEpilog: case nIf: case nNewfn: case nAssignfn: case nNewtry: case nCbody:
 	case nOrelse: case nPre: case nArgs: case nSwitch:
 	case nMatch: case nVarsub: case nWhile: case nLappend:
@@ -149,7 +163,12 @@ extern void treefree(Node *s) {
 	case nSubshell: case nVar: case nCase:
 		treefree(s->u[0].p);
 		break;
-	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
+	case nScope:
+		treefree(s->u[3].p);
+		treefree(s->u[1].p);
+		treefree(s->u[0].p);
+		break;
+	case nAndalso: case nAssign: case nLocalassign: case nBackq: case nBody: case nConcat:
 	case nElse: case nEpilog: case nIf: case nNewfn: case nAssignfn: case nNewtry:
 	case nOrelse: case nPre: case nArgs: case nCbody:
 	case nSwitch: case nMatch:  case nVarsub: case nWhile:
@@ -171,4 +190,52 @@ extern void treefree(Node *s) {
 		treefree(s->u[2].p);
 	}
 	efree(s);
+}
+
+// XXX Can optimize by storing both the parent and a flag indicating whether or
+// not each flag has any locals.
+static scope_t* scopeMap = NULL;
+static size_t scopeMapLen = 0;
+static void setScopeParent(scope_t scope, scope_t parent) {
+	if(scopeMap == NULL) {
+		scopeMapLen = 128;
+		scopeMap = calloc(scopeMapLen, sizeof(scope_t));
+	}
+
+	if(scope >= scopeMapLen) {
+		scopeMapLen *= 2;
+		scope_t* newScopeMap = reallocarray(scopeMap, scopeMapLen, sizeof(scope_t));
+		if(newScopeMap == NULL) {
+			panic("out of memory");
+		}
+		scopeMap = newScopeMap;
+	}
+
+	scopeMap[scope] = parent;
+}
+extern scope_t getScopeParent(scope_t scope) {
+	if(scope >= scopeMapLen) { return 0; }
+	return scopeMap[scope];
+}
+
+static long curScope = 0;
+static int nScopes = 0;
+static scope_t scopeStack[128];
+extern scope_t pushParseScope(void) {
+	if(nScopes >= 128) {
+		panic("scopes nested too deeply");
+	}
+	curScope += 1;
+	scopeStack[nScopes] = curScope;
+
+	if(nScopes > 0) {
+		setScopeParent(curScope, scopeStack[nScopes-1]);
+	}
+
+	nScopes += 1;
+	return curScope;
+}
+
+extern void popParseScope(void) {
+	if(nScopes > 0) { nScopes -= 1; }
 }

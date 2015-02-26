@@ -2,6 +2,8 @@
 
 #include "rc.h"
 
+#include <stdio.h>
+#include <stdint.h>
 #include <errno.h>
 #include <setjmp.h>
 
@@ -78,4 +80,38 @@ extern int mvfd(int i, int j) {
 		return s;
 	}
 	return 0;
+}
+
+// From OpenBSD
+#define MUL_NO_OVERFLOW (1UL << (sizeof(size_t) * 4))
+extern void* reallocarray(void* optr, size_t nmemb, size_t size) {
+	if((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) &&
+	   nmemb > 0 && SIZE_MAX / nmemb < size) {
+		errno = ENOMEM;
+		return NULL;
+	}
+
+	return realloc(optr, size * nmemb);
+}
+
+static char* varbuf = NULL;
+static size_t varbufLen = 0;
+extern char* getLocalName(scope_t scope, const char* rawname) {
+	if(varbuf == NULL) {
+		varbufLen = 128;
+		varbuf = calloc(varbufLen, sizeof(char));
+	}
+
+	while(TRUE) {
+		size_t written = snprintf(varbuf, varbufLen, LOCAL_PREFIX "%lu_%s", scope, rawname);
+		if(written >= varbufLen) {
+			char* newvarbuf = reallocarray(varbuf, varbufLen*2, sizeof(char));
+			if(newvarbuf == NULL) {
+				panic("out of memory");
+			}
+			varbuf = newvarbuf;
+		} else {
+			return varbuf;
+		}
+	}
 }

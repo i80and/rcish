@@ -15,7 +15,7 @@ Node *parsetree;	/* not using yylval because bison declares it as an auto */
 
 %token ANDAND BACKBACK BANG CASE COUNT DUP ELSE END FLAT FN FOR IF IN
 %token OROR PIPE REDIR SREDIR SUB SUBSHELL SWITCH TWIDDLE WHILE WORD HUH
-%token TRY
+%token TRY LOCAL
 
 %left WHILE ')' ELSE
 %left ANDAND OROR '\n'
@@ -33,6 +33,7 @@ Node *parsetree;	/* not using yylval because bison declares it as an auto */
 	struct Dup dup;
 	struct Word word;
 	char *keyword;
+	long scope;
 }
 
 %type <redir> REDIR SREDIR
@@ -41,7 +42,7 @@ Node *parsetree;	/* not using yylval because bison declares it as an auto */
 %type <word> WORD
 %type <keyword> keyword
 %type <node> assign body brace case cbody cmd cmdsa cmdsan comword epilog
-	     first line nlwords paren redir sword simple iftail word words
+	     first line nlwords paren redir sword simple iftail word words scope
 
 %start rc
 
@@ -69,7 +70,11 @@ body	: cmd
 cmdsan	: cmdsa
 	| cmd '\n'		{ $$ = $1; if (!heredoc(0)) YYABORT; } /* get h.d. on \n */
 
-brace	: '{' body '}'		{ $$ = $2; }
+brace	:	'{' body '}'	{ $$ = $2; }
+
+scope	:	{ $<scope>$ = pushParseScope(); }
+			brace epilog
+			{ $$ = mk(nScope,$<scope>1,$2,$3); popParseScope(); }
 
 paren	: '(' body ')'		{ $$ = $2; }
 
@@ -95,11 +100,11 @@ cbody	: cmd					{ $$ = mk(nCbody, $1, NULL); }
 	| cmdsan cbody				{ $$ = mk(nCbody, $1, $2); }
 
 iftail	: cmd		%prec ELSE
-	| brace ELSE optnl cmd			{ $$ = mk(nElse,$1,$4); }
+	| scope ELSE optnl cmd			{ $$ = mk(nElse,$1,$4); }
 
 cmd	: /* empty */	%prec WHILE		{ $$ = NULL; }
 	| simple
-	| brace epilog				{ $$ = mk(nBrace,$1,$2); }
+	| scope							{ $$ = $1; }
 	| IF paren optnl iftail			{ $$ = mk(nIf,$2,$4); }
 	| FOR '(' word IN words ')' optnl cmd	{ $$ = mk(nForin,$3,$5,$8); }
 	| FOR '(' word ')' optnl cmd		{ $$ = mk(nForin,$3,star,$6); }
@@ -111,10 +116,11 @@ cmd	: /* empty */	%prec WHILE		{ $$ = NULL; }
  	| cmd PIPE optnl cmd			{ $$ = mk(nPipe,$2.left,$2.right,$1,$4); }
 	| redir cmd	%prec BANG		{ $$ = ($2 != NULL ? mk(nPre,$1,$2) : $1); }
 	| assign cmd	%prec BANG		{ $$ = ($2 != NULL ? mk(nPre,$1,$2) : $1); }
+	| LOCAL word '=' words		{ $$ = mk(nLocalassign,$2,$4); }
 	| BANG optcaret cmd			{ $$ = mk(nBang,$3); }
 	| SUBSHELL optcaret cmd			{ $$ = mk(nSubshell,$3); }
-	| TRY brace					{ $$ = mk(nNewtry,$2); }
-	| FN words brace			{ $$ = mk(nNewfn,$2,$3); }
+	| TRY scope					{ $$ = mk(nNewtry,$2); }
+	| FN words scope		{ $$ = mk(nNewfn,$2,$3); }
 	| FN words				{ $$ = mk(nRmfn,$2); }
     | FN words '=' words		{ $$ = mk(nAssignfn,$2,$4); }
 
@@ -155,6 +161,7 @@ keyword	: FOR		{ $$ = "for"; }
 	| TRY		{ $$ = "try"; }
 	| ELSE		{ $$ = "else"; }
 	| CASE		{ $$ = "case"; }
+	| LOCAL		{ $$ = "local"; }
 	| TWIDDLE	{ $$ = "~"; }
 	| BANG		{ $$ = "!"; }
 	| SUBSHELL	{ $$ = "@"; }

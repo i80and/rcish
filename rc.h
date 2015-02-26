@@ -6,6 +6,8 @@
 
 #define RC "rc: "
 
+#define LOCAL_PREFIX "_rc_local_"
+
 /* datatypes */
 
 #define ENV_SEP '\001'
@@ -33,11 +35,13 @@ typedef struct Word Word;
 typedef struct Format Format;
 typedef union Edata Edata;
 
+typedef unsigned long scope_t;
+
 typedef enum nodetype {
-	nAndalso, nAssign, nBackq, nBang, nBody, nCbody, nNowait, nBrace,
+	nAndalso, nAssign, nLocalassign, nBackq, nBang, nBody, nCbody, nNowait,
 	nConcat, nCount, nElse, nFlat, nDup, nEpilog, nNewfn, nAssignfn, nNewtry, nForin, nIf,
 	nOrelse, nPipe, nPre, nRedir, nRmfn, nArgs, nSubshell, nCase,
-	nSwitch, nMatch, nVar, nVarsub, nWhile, nWord, nLappend, nNmpipe
+	nSwitch, nMatch, nVar, nVarsub, nWhile, nWord, nLappend, nNmpipe, nScope
 } nodetype;
 
 typedef enum ecodes {
@@ -78,6 +82,7 @@ struct Node {
 	union {
 		char *s;
 		int i;
+		long scope;
 		Node *p;
 	} u[4];
 };
@@ -218,7 +223,7 @@ extern bool lmatch(List *, List *);
 extern List *glob(List *);
 
 /* glom.c */
-extern void assign(List *, List *, bool);
+extern void assign(List *, List *, bool, bool);
 extern void qredir(Node *);
 extern List *append(List *, List*);
 extern List *flatten(List *);
@@ -232,6 +237,8 @@ extern Htab *fp, *vp;
 extern void *lookup(char *, Htab *);
 extern rc_Function *get_fn_place(char *);
 extern List *varlookup(char *);
+extern List* varlookup_scopes(char* rawname);
+extern char* resolve_varname(char* rawname);
 extern Node *fnlookup(char *);
 extern Variable *get_var_place(char *, bool);
 extern bool varassign_string(char *);
@@ -373,6 +380,9 @@ extern volatile sig_atomic_t slow;
 extern Node *mk(int /*nodetype*/,...);
 extern Node *treecpy(Node *, void *(*)(size_t));
 extern void treefree(Node *);
+extern scope_t pushParseScope(void);
+extern void popParseScope(void);
+extern scope_t getScopeParent(scope_t scope);
 
 /* utils.c */
 extern bool isabsolute(char *);
@@ -382,6 +392,8 @@ extern int starstrcmp(const void *, const void *);
 extern void pr_error(char *, int);
 extern void panic(char *);
 extern void uerror(const char *);
+extern void* reallocarray(void*, size_t, size_t);
+extern char* getLocalName(scope_t scope, const char*);
 
 /* wait.c */
 extern pid_t rc_fork(void);
@@ -391,5 +403,6 @@ extern void waitforall(void);
 extern bool forked;
 
 /* walk.c */
+extern scope_t getScope(void);
 extern bool walk(Node *, bool, bool);
 extern bool cond;

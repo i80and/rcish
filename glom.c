@@ -2,6 +2,7 @@
 
 #include "rc.h"
 
+#include <stdio.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <errno.h>
@@ -141,7 +142,7 @@ static List *count(List *l) {
 	return s;
 }
 
-extern void assign(List *s1, List *s2, bool stack) {
+extern void assign(List *s1, List *s2, bool stack, bool local) {
 	List *val = s2;
 	if (s1 == NULL)
 		rc_error("null variable name");
@@ -154,16 +155,26 @@ extern void assign(List *s1, List *s2, bool stack) {
 	if (strchr(s1->w, '=') != NULL)
 		rc_error("'=' in variable name");
 	if (*s1->w == '*' && s1->w[1] == '\0')
-		val = append(varlookup("0"), s2); /* preserve $0 when * is assigned explicitly */
+		val = append(varlookup_scopes("0"), s2); /* preserve $0 when * is assigned explicitly */
+
+	char* name;
+	if(local) {
+		// If we're defining a local variable, mangle the name
+		name = getLocalName(getScope(), s1->w);
+	} else {
+		// Find the innermost occurance of this variable name, and assign it.
+		name = resolve_varname(s1->w);
+	}
+
 	if (s2 != NULL || stack) {
 		if (dashex)
 			prettyprint_var(2, s1->w, val);
-		varassign(s1->w, val, stack);
-		alias(s1->w, varlookup(s1->w), stack);
+		varassign(name, val, stack);
+		alias(name, varlookup_scopes(name), stack);
 	} else {
 		if (dashex)
-			prettyprint_var(2, s1->w, NULL);
-		varrm(s1->w, stack);
+			prettyprint_var(2, name, NULL);
+		varrm(name, stack);
 	}
 }
 
@@ -420,7 +431,7 @@ extern List *glom(Node *n) {
 			rc_error("multi-word variable name");
 		if (*v->w == '\0')
 			rc_error("zero-length variable name");
-		v = (*v->w == '*' && v->w[1] == '\0') ? varlookup(v->w)->n : varlookup(v->w);
+		v = (*v->w == '*' && v->w[1] == '\0') ? varlookup_scopes(v->w)->n : varlookup_scopes(v->w);
 		switch (n->type) {
 		default:
 			panic("unexpected node in glom");

@@ -63,11 +63,12 @@ static bool Tconv(Format *f, int ignore) {
 	case nSubshell:	fmtprint(f, "@ %T", n->u[0].p);				break;
 	case nAndalso:	fmtprint(f, "%T&&%T", n->u[0].p, n->u[1].p);		break;
 	case nAssign:	fmtprint(f, "%T=%T", n->u[0].p, n->u[1].p);		break;
+	case nLocalassign:	fmtprint(f, "local %T=%T", n->u[0].p, n->u[1].p);		break;
 	case nConcat:	fmtprint(f, "%T^%T", n->u[0].p, n->u[1].p);		break;
 	case nElse:	fmtprint(f, "{%T}else %T", n->u[0].p, n->u[1].p);	break;
-	case nNewfn:	fmtprint(f, "fn %T {%T}", n->u[0].p, n->u[1].p);	break;
+	case nNewfn:	fmtprint(f, "fn %T %T", n->u[0].p, n->u[1].p);	break;
 	case nAssignfn:	fmtprint(f, "fn %T = %T", n->u[0].p, n->u[1].p);	break;
-	case nNewtry:	fmtprint(f, "try {%T}", n->u[0].p);	break;
+	case nNewtry:	fmtprint(f, "try %T", n->u[0].p);	break;
 	case nIf:	fmtprint(f, "if(%T)%T", n->u[0].p, n->u[1].p);		break;
 	case nOrelse:	fmtprint(f, "%T||%T", n->u[0].p, n->u[1].p);		break;
 	case nArgs:	fmtprint(f, "%T %T", n->u[0].p, n->u[1].p);		break;
@@ -134,7 +135,7 @@ static bool Tconv(Format *f, int ignore) {
 		}
 		break;
 	}
-	case nBrace:
+	case nScope:
 		fmtprint(f, "{%T}", n->u[0].p);
 		if (n->u[1].p != NULL)
 			fmtprint(f, "%T", n->u[1].p);
