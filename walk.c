@@ -8,22 +8,49 @@
 #include "jbwrap.h"
 
 static int nScopes = 0;
-static scope_t scopeStack[128];
+static struct Scope scopeStack[128];
 static void pushScope(scope_t scope) {
 	if(nScopes >= 128) {
 		panic("scopes nested too deeply");
 	}
-	scopeStack[nScopes] = scope;
+	scopeStack[nScopes].scope = scope;
+	scopeStack[nScopes].variables = NULL;
 	nScopes += 1;
 }
 
 static void popScope(void) {
-	if(nScopes > 0) { nScopes -= 1; }
+	if(nScopes > 0) {
+		nScopes -= 1;
+		List* p = scopeStack[nScopes].variables;
+
+		// Delete the contents of this stack frame
+		while (p != NULL) {
+			delete_var(p->w, FALSE);
+			List *n = p->n;
+			efree(p);
+			p = n;
+		}
+
+		scopeStack[nScopes].variables = NULL;
+	}
 }
 
 extern scope_t getScope(void) {
-	if(nScopes > 0) { return scopeStack[nScopes-1]; }
+	if(nScopes > 0) { return scopeStack[nScopes-1].scope; }
 	else { return 0; }
+}
+
+// Mark a variable's full mangled name as being ripe for deletion
+// when its containing scope exits.
+extern void addScopeVariable(char* fullName) {
+	if(nScopes > 0) {
+		List* root = scopeStack[nScopes-1].variables;
+		List* newRoot = enew(List);
+		newRoot->n = root;
+		newRoot->w = fullName;
+
+		scopeStack[nScopes-1].variables = newRoot;
+	}
 }
 
 /*

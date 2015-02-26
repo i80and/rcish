@@ -161,6 +161,7 @@ extern void assign(List *s1, List *s2, bool stack, bool local) {
 	if(local) {
 		// If we're defining a local variable, mangle the name
 		name = getLocalName(getScope(), s1->w);
+		addScopeVariable(name);
 	} else {
 		// Find the innermost occurance of this variable name, and assign it.
 		name = resolve_varname(s1->w);

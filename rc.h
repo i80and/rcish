@@ -36,6 +36,10 @@ typedef struct Format Format;
 typedef union Edata Edata;
 
 typedef unsigned long scope_t;
+struct Scope {
+	scope_t scope;
+	List* variables;
+};
 
 typedef enum nodetype {
 	nAndalso, nAssign, nLocalassign, nBackq, nBang, nBody, nCbody, nNowait,
@@ -383,6 +387,7 @@ extern void treefree(Node *);
 extern scope_t pushParseScope(void);
 extern void popParseScope(void);
 extern scope_t getScopeParent(scope_t scope);
+extern void addScopeVariable(char* fullName);
 
 /* utils.c */
 extern bool isabsolute(char *);
