@@ -35,7 +35,7 @@ typedef struct Word Word;
 typedef struct Format Format;
 typedef union Edata Edata;
 
-typedef unsigned long scope_t;
+typedef long long scope_t;
 struct Scope {
 	scope_t scope;
 	List* variables;

@@ -71,6 +71,9 @@ static void dopipe(Node *);
 /* walk the parse-tree. "obvious". */
 
 extern bool walk(Node *n, bool parent, bool exitOnError) {
+	// Detect stack naughtiness
+	scope_t origScope = getScope();
+
 top:	sigchk();
 	if (n == NULL) {
 		if (!parent)
@@ -165,8 +168,9 @@ top:	sigchk();
 			cond = oldcond;
 			break;
 		}
-		if (sigsetjmp(j.j, 1))
+		if (sigsetjmp(j.j, 1)) {
 			break;
+		}
 		jbreak.jb = &j;
 		except(eBreak, jbreak, &e1);
 		do {
@@ -324,14 +328,15 @@ top:	sigchk();
 		break;
 	}
 	case nScope:
-		pushScope(n->u[2].scope);
 		if (n->u[1].p == NULL) {
+			pushScope(n->u[2].scope);
 			walk(n->u[0].p, parent, exitOnError);
 			popScope();
 		} else if (dofork(parent)) {
 			setsigdefaults(FALSE);
 			walk(n->u[1].p, TRUE, exitOnError); /* Do redirections */
 			redirq = NULL;   /* Reset redirection queue */
+			pushScope(n->u[2].scope);
 			walk(n->u[0].p, FALSE, exitOnError); /* Do commands */
 			popScope();
 			rc_exit(getexitstatus());
@@ -353,6 +358,13 @@ top:	sigchk();
 		panic("unknown node in walk");
 		/* NOTREACHED */
 	}
+
+	// If our current scope is deeper than we originally had, a loop broke
+	// and the scope handler never got a chance to pop it.
+	while(getScope() > origScope) {
+		popScope();
+	}
+
 	return istrue();
 }
 

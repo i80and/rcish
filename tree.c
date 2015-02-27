@@ -214,12 +214,13 @@ static void setScopeParent(scope_t scope, scope_t parent) {
 	scopeMap[scope] = parent;
 }
 extern scope_t getScopeParent(scope_t scope) {
+	if(scope == 0) { return -1; } // The root scope has no parent
 	if(scope >= scopeMapLen) { return 0; }
 	return scopeMap[scope];
 }
 
-static long curScope = 0;
-static int nScopes = 0;
+static scope_t curScope = 0;
+static size_t nScopes = 0;
 static scope_t scopeStack[128];
 extern scope_t pushParseScope(void) {
 	if(nScopes >= 128) {

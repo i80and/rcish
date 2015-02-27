@@ -105,7 +105,7 @@ extern char* resolve_varname(char* rawname) {
 		List* cur = varlookup(name);
 		if(cur != NULL) { return name; }
 		curScope = getScopeParent(curScope);
-	} while(curScope > 0);
+	} while(curScope >= 0);
 
 	// Return the global, if no locals were found
 	return rawname;

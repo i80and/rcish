@@ -597,7 +597,9 @@ x=$tmpdir/qux*/foo
 ~ $x $tmpdir/qux/foo || { rm -rf $tmpdir/qux; fail broken symlink globbing }
 
 # Sanity-check scoping behavior
+local scopeRoot = 0
 fn scopeTest {
+    if(!~ $scopeRoot 0) { fail "scopeRoot not inherited" }
     if(!~ $scopeTest ()) { fail "scopeTest should be empty" }
 
     local scopeTest = 10
