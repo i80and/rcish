@@ -20,9 +20,9 @@
 #include "rlimit.h"
 #include "sigmsgs.h"
 
-static void b_break(char **), b_cd(char **), b_pwd(char **), b_eval(char **),
+static void b_break(char **), b_cd(char **), b_eval(char **),
     b_exit(char **), b_newpgrp(char **), b_return(char **), b_shift(char **),
-    b_umask(char **), b_wait(char **), b_whatis(char **), b_add(char **);
+    b_umask(char **), b_wait(char **), b_whatis(char **);
 
 #if HAVE_SETRLIMIT
 static void b_limit(char **);
@@ -39,7 +39,6 @@ static struct {
 	{ b_break,	"break" },
 	{ b_builtin,	"builtin" },
 	{ b_cd,		"cd" },
-	{ b_pwd,    "pwd" },
 #if RC_ECHO
 	{ b_echo,	"echo" },
 #endif
@@ -56,7 +55,6 @@ static struct {
 	{ b_wait,	"wait" },
 	{ b_whatis,	"whatis" },
 	{ b_dot,	"." },
-	{ b_add,    "+" },
 #ifdef ADDONS
 	ADDONS
 #endif
@@ -170,22 +168,6 @@ static void b_cd(char **av) {
 		fprint(2, "couldn't cd to %s\n", *av);
 		set(FALSE);
 	}
-}
-
-static void b_pwd(char **av) {
-    static char buf[4096];
-
-    if(*++av != NULL) {
-        fprint(2, "pwd [-LP]\n");
-        set(FALSE);
-        return;
-    }
-
-    if(getcwd(buf, sizeof(buf)) == NULL) {
-        fprint(2, "couldn't get current path\n");
-        set(FALSE);
-    }
-    fprint(1, "%s\n", buf);
 }
 
 static void b_umask(char **av) {
@@ -421,20 +403,6 @@ extern void b_dot(char **av) {
 	varrm("*", TRUE);
 	unexcept(); /* eVarstack */
 	interactive = old_i;
-}
-
-static void b_add(char **av) {
-	if(av == NULL) { return; }
-
-	long long sum = 0;
-	int i = 0;
-	while(av[i] != NULL) {
-		long long val = atoll(av[i]);
-		sum += val;
-		av += 1;
-	}
-
-	fprint(1, "%lld\n", sum);
 }
 
 /* put rc into a new pgrp. Used on the NeXT where the Terminal program is broken (sigh) */
