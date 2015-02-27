@@ -12,6 +12,7 @@
 void (*sys_signal(int signum, void (*handler)(int)))(int) {
 	struct sigaction new, old;
 
+	old.sa_handler = NULL;
 	new.sa_handler = handler;
 	new.sa_flags = 0; /* clear SA_RESTART */
 	sigfillset(&new.sa_mask);
