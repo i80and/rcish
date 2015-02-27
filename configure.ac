@@ -7,7 +7,7 @@ AC_DEFINE_UNQUOTED(RELDATE, "$RELDATE", [Release date])
 
 dnl Get things going...
 AC_CONFIG_SRCDIR([rc.h])
-AM_INIT_AUTOMAKE([subdir-objects])
+AM_INIT_AUTOMAKE([subdir-objects foreign])
 
 AM_CONFIG_HEADER(config.h)
 
