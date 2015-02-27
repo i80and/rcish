@@ -220,11 +220,12 @@ fn foo # test deleting of function
 fn bar {
 	for (i in 1 2 3 4 5)
 		if (~ $i 3)
+		    echo $i
 			return
 }
 
 bar
-if (!~ $i 3)
+if (!~ `{bar} 3)
 	fail return inside loop inside function failed
 
 submatch return 'rc: return outside of function' 'return outside of function'

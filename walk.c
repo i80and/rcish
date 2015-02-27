@@ -188,7 +188,7 @@ top:	sigchk();
 		break;
 	}
 	case nForin: {
-		List *l, *var = glom(n->u[0].p);
+		List *l;
 		Jbwrap j;
 		Estack e1, e2;
 		Edata jbreak;
@@ -198,7 +198,7 @@ top:	sigchk();
 		except(eBreak, jbreak, &e1);
 		for (l = listcpy(glob(glom(n->u[1].p)), nalloc); l != NULL; l = l->n) {
 			Edata block;
-			assign(var, word(l->w, NULL), FALSE, FALSE);
+			assign(glom(n->u[0].p), word(l->w, NULL), FALSE, TRUE);
 			block.b = newblock();
 			except(eArena, block, &e2);
 			walk(n->u[2].p, TRUE, exitOnError);
